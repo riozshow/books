@@ -4,7 +4,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { Book } from '@prisma/client';
+import { Book, User } from '@prisma/client';
 import { CreateBookDTO } from './dtos/create-book.dto';
 import { UpdateBookDTO } from './dtos/update-book.dto';
 
@@ -66,5 +66,28 @@ export class BooksService {
     if (!(await this.getById(id)))
       throw new NotFoundException('book not found');
     return this.db.book.delete({ where: { id } });
+  }
+
+  public async like(userId: User['id'], bookId: Book['id']) {
+    if (!(await this.getById(bookId)))
+      throw new NotFoundException('Book not found');
+    try {
+      return await this.db.book.update({
+        where: { id: bookId },
+        data: {
+          users: {
+            create: {
+              user: {
+                connect: { id: userId },
+              },
+            },
+          },
+        },
+      });
+    } catch (err) {
+      if (err.code === 'P2002') {
+        throw new BadRequestException('You already liked this book');
+      }
+    }
   }
 }

@@ -14,7 +14,15 @@ export class UsersService {
   constructor(private db: PrismaService) {}
 
   public getAll(): Promise<User[]> {
-    return this.db.user.findMany();
+    return this.db.user.findMany({
+      include: {
+        books: {
+          include: {
+            book: true,
+          },
+        },
+      },
+    });
   }
 
   public async getById(id: User['id']): Promise<User | void> {
@@ -72,13 +80,16 @@ export class UsersService {
       }
     } catch (err) {
       if (err.code === 'P2025')
-        throw new BadRequestException("User doesn't exist");
+        throw new NotFoundException("User doesn't exist");
       if (err.code === 'P2002')
         throw new BadRequestException('Email is already taken');
     }
   }
 
-  public deleteById(id: User['id']) {
+  public async deleteById(id: User['id']) {
+    if (!(await this.getById(id))) {
+      throw new NotFoundException("User doesn't exist");
+    }
     return this.db.user.delete({ where: { id } });
   }
 }

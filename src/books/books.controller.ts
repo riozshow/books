@@ -8,6 +8,7 @@ import {
   Param,
   ParseUUIDPipe,
   UseGuards,
+  Request,
 } from '@nestjs/common';
 import { BooksService } from './books.service';
 import { CreateBookDTO } from './dtos/create-book.dto';
@@ -47,5 +48,11 @@ export class BooksController {
   @Delete('/:id')
   delete(@Param('id', new ParseUUIDPipe()) id: string) {
     return this.booksService.delete(id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('/:id/like')
+  like(@Param('id', new ParseUUIDPipe()) id: string, @Request() req) {
+    return this.booksService.like(req.user.id, id);
   }
 }
